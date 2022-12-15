@@ -9,6 +9,7 @@ app.use(express.json());
 app.use(cors());
 
 app.get("/", (req, res) => res.send("Backend Working!!"));
+app.use("/api/v1", require("./routes/v1"));
 
 db.then(() => {
   console.log("Database Connected Successfully");

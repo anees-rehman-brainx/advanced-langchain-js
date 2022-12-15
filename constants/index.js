@@ -8,13 +8,6 @@ const FORGET_PASS_EMAIL_BODY = (user, oldPass) => {
   }/auth/reset-password/${generateTokenWithSecret(user, oldPass)}`;
 };
 
-const userAttachments = [
-  "businessInfo.photo",
-  "profile.photo",
-  "documents.business",
-  "documents.insurance",
-];
-
 const getS3Url = (key) => {
   return encodeURI(
     `https://${process.env.AWS_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`
@@ -35,4 +28,7 @@ const PLATFORMS = {
 module.exports = {
   FORGET_PASS_EMAIL_BODY,
   getS3Url,
+  FORGET_PASS_EMAIL_SUBJECT,
+  passwordRegex,
+  PLATFORMS,
 };

@@ -1,3 +1,5 @@
+const m2s = require("mongoose-to-swagger");
+
 const getFirebaseAdminKey = () => {
   return {
     type: "service_account",
@@ -13,6 +15,15 @@ const getFirebaseAdminKey = () => {
   };
 };
 
+const getSwaggerSchemas = (models) => {
+  let schemas = {};
+  for (let model in models) {
+    schemas.model = m2s(models[model]);
+  }
+  return schemas;
+};
+
 module.exports = {
   getFirebaseAdminKey,
+  getSwaggerSchemas,
 };

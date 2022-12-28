@@ -10,6 +10,47 @@ const { sendMail } = require("../services/mailerService");
 const smsService = require("../services/smsService");
 const _ = require("lodash");
 
+/**
+  * @swagger
+  * tags:
+  *   name: Authentication
+  *   description: The routes regarding authentication and authorization
+  */
+
+/**
+ * @swagger
+ * /auth/signup:
+ *   post:
+ *     summary: signup a new user
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: Object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               firebaseToken:
+ *                 type: string
+ *             example:
+ *               email: someone@mail.com
+ *               password: password
+ *               firebaseToken: firebaseToken
+ *     responses:
+ *       200:
+ *         description: user signed up successfully
+ *       422:
+ *         description: invalid request body
+ *       500:
+ *         description: something went wrong
+ */
 const signup = async (req, res) => {
   try {
     const { email, password, firebaseToken } = req.body;
@@ -74,6 +115,42 @@ const signup = async (req, res) => {
   }
 };
 
+/**
+ * @swagger
+ * /auth/login:
+ *   post:
+ *     summary: signin a user
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: Object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *               firebaseToken:
+ *                 type: string
+ *             example:
+ *               email: someone@mail.com
+ *               password: password
+ *               firebaseToken: firebaseToken
+ *     responses:
+ *       200:
+ *         description: user signed in successfully
+ *       422:
+ *         description: invalid request body
+ *       500:
+ *         description: something went wrong
+ *       403:
+ *         description: Email or password incorrect
+ */
 const login = async (req, res) => {
   try {
     const { email, password, firebaseToken } = req.body;
@@ -130,6 +207,35 @@ const login = async (req, res) => {
   }
 };
 
+/**
+ * @swagger
+ * /auth/forget-password:
+ *   post:
+ *     summary: email a reset link when password is forgotton
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: Object
+ *             required:
+ *               - email
+ *             properties:
+ *               email:
+ *                 type: string
+ *             example:
+ *               email: someone@mail.com
+ *     responses:
+ *       200:
+ *         description: Email sent successfully!
+ *       422:
+ *         description: Email missing!
+ *       500:
+ *         description: something went wrong
+ *       404:
+ *         description: User not found
+ */
 const forgetPassword = async (req, res) => {
   try {
     const { email } = req.body;
@@ -150,6 +256,37 @@ const forgetPassword = async (req, res) => {
   }
 };
 
+/**
+ * @swagger
+ * /auth/validate-pass-reset-link:
+ *   post:
+ *     summary: validates a link sent for resetting password
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: Object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *             example:
+ *               token: abcd
+ *     responses:
+ *       200:
+ *         description: Email sent successfully!
+ *       422:
+ *         description: Token missing!
+ *       401:
+ *         description: Token is not valid!
+ *       500:
+ *         description: something went wrong
+ *       404:
+ *         description: User not found
+ */
 const validateLink = async (req, res) => {
   try {
     const { token } = req.body;
@@ -175,6 +312,43 @@ const validateLink = async (req, res) => {
   }
 };
 
+/**
+ * @swagger
+ * /auth/change-password:
+ *   put:
+ *     summary: change an existing user password
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: Object
+ *             required:
+ *               - oldPassword
+ *               - newPassword
+ *               - confirmNewPassword
+ *             properties:
+ *               oldPassword:
+ *                 type: string
+ *               newPassword:
+ *                 type: string
+ *               confirmNewPassword:
+ *                 type: string
+ *             example:
+ *               oldPassword: oldPassword
+ *               newPassword: newPassword
+ *               confirmNewPassword: newPassword
+ *     responses:
+ *       200:
+ *         description: Password Changed successfully!
+ *       422:
+ *         description: Required fields missing!
+ *       500:
+ *         description: something went wrong
+ *       403:
+ *         description: user not authorized
+ */
 const changePassword = async (req, res) => {
   try {
     const { oldPassword, newPassword, confirmNewPassword } = req.body;
@@ -214,6 +388,39 @@ const changePassword = async (req, res) => {
   }
 };
 
+/**
+ * @swagger
+ * /auth/change-password:
+ *   post:
+ *     summary: reset password with email link token
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: Object
+ *             required:
+ *               - token
+ *               - password
+ *             properties:
+ *               token:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *             example:
+ *               oldPassword: token
+ *               password: password
+ *     responses:
+ *       200:
+ *         description: Password reset successfully!
+ *       422:
+ *         description: Required fields missing!
+ *       500:
+ *         description: something went wrong
+ *       401:
+ *         description: Token is not valid!
+ */
 const resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body;
@@ -248,6 +455,33 @@ const resetPassword = async (req, res) => {
   }
 };
 
+/**
+ * @swagger
+ * /auth/send-otp:
+ *   post:
+ *     summary: send an OPT on given number for user verification
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: Object
+ *             required:
+ *               - number
+ *             properties:
+ *               number:
+ *                 type: string
+ *             example:
+ *               number: 1234567
+ *     responses:
+ *       200:
+ *         description: OTP sent successfully
+ *       422:
+ *         description: Required fields missing!
+ *       500:
+ *         description: something went wrong
+ */
 const sendOTP = async (req, res) => {
   try {
     const { number } = req.body;
@@ -263,6 +497,37 @@ const sendOTP = async (req, res) => {
   }
 };
 
+/**
+ * @swagger
+ * /auth/verify-otp:
+ *   post:
+ *     summary: verify the sent OTP on given number
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: Object
+ *             required:
+ *               - number
+ *               - code
+ *             properties:
+ *               number:
+ *                 type: string
+ *               code:
+ *                 type: string
+ *             example:
+ *               number: 1234567
+ *               code: 1234
+ *     responses:
+ *       200:
+ *         description: OTP verified successfully
+ *       422:
+ *         description: Required fields missing!
+ *       500:
+ *         description: something went wrong
+ */
 const verifyOTP = async (req, res) => {
   try {
     const { number, code } = req.body;

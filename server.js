@@ -21,7 +21,7 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:5000/api/v1',
+        url: `${process.env.HOST}/api/v1`,
       },
     ],
     components: {

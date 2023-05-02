@@ -136,12 +136,9 @@ const signup = async (req, res) => {
  *                 type: string
  *               password:
  *                 type: string
- *               firebaseToken:
- *                 type: string
  *             example:
  *               email: someone@mail.com
  *               password: password
- *               firebaseToken: firebaseToken
  *     responses:
  *       200:
  *         description: user signed in successfully
@@ -319,6 +316,17 @@ const validateLink = async (req, res) => {
  *   put:
  *     summary: change an existing user password
  *     tags: [User]
+ *     parameters:
+ *      - in: header
+ *        name: access_token
+ *        schema:
+ *          type: string
+ *        required: true
+ *      - in: header
+ *        name: platform
+ *        schema:
+ *          type: string
+ *        required: true
  *     requestBody:
  *       required: true
  *       content:
@@ -462,6 +470,17 @@ const resetPassword = async (req, res) => {
  *   post:
  *     summary: send an OPT on given number for user verification
  *     tags: [User]
+ *     parameters:
+ *      - in: header
+ *        name: access_token
+ *        schema:
+ *          type: string
+ *        required: true
+ *      - in: header
+ *        name: platform
+ *        schema:
+ *          type: string
+ *        required: true
  *     requestBody:
  *       required: true
  *       content:
@@ -504,6 +523,17 @@ const sendOTP = async (req, res) => {
  *   post:
  *     summary: verify the sent OTP on given number
  *     tags: [User]
+ *     parameters:
+ *      - in: header
+ *        name: access_token
+ *        schema:
+ *          type: string
+ *        required: true
+ *      - in: header
+ *        name: platform
+ *        schema:
+ *          type: string
+ *        required: true
  *     requestBody:
  *       required: true
  *       content:
@@ -552,6 +582,17 @@ const verifyOTP = async (req, res) => {
  *   put:
  *     summary: update user's profile
  *     tags: [User]
+ *     parameters:
+ *      - in: header
+ *        name: access_token
+ *        schema:
+ *          type: string
+ *        required: true
+ *      - in: header
+ *        name: platform
+ *        schema:
+ *          type: string
+ *        required: true
  *     requestBody:
  *       required: true
  *       content:

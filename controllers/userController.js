@@ -1,28 +1,29 @@
-const { jwtService, userService } = require("../services");
+const { jwtService, userService } = require('../services');
 const {
   FORGET_PASS_EMAIL_SUBJECT,
   FORGET_PASS_EMAIL_BODY,
   PLATFORMS,
   passwordRegex,
-} = require("../constants");
-const bcrypt = require("bcrypt");
-const { sendMail } = require("../services/mailerService");
-const smsService = require("../services/smsService");
-const _ = require("lodash");
-
-/**
-  * @swagger
-  * tags:
-  *   name: Authentication
-  *   description: The routes regarding authentication and authorization
-  */
+} = require('../constants');
+const bcrypt = require('bcrypt');
+const { sendMail } = require('../services/mailerService');
+const smsService = require('../services/smsService');
+const _ = require('lodash');
+const { removeUserLockedFields } = require('../services/utilsService');
 
 /**
  * @swagger
- * /auth/signup:
+ * tags:
+ *   name: User
+ *   description: The routes regarding user's authentication, authorization and functionality
+ */
+
+/**
+ * @swagger
+ * /user/register:
  *   post:
  *     summary: signup a new user
- *     tags: [Authentication]
+ *     tags: [User]
  *     requestBody:
  *       required: true
  *       content:
@@ -55,13 +56,13 @@ const signup = async (req, res) => {
   try {
     const { email, password, firebaseToken } = req.body;
     if (!email || !password) {
-      return res.status(422).send({ error: "Email or password missing!" });
+      return res.status(422).send({ error: 'Email or password missing!' });
     }
 
     if (!password.match(passwordRegex)) {
-      return res.status(200).send({
+      return res.status(422).send({
         error:
-          "Password must contain at least 8 characters, 1 uppercase letter, 1 special character and 1 number!",
+          'Password must contain at least 8 characters, 1 uppercase letter, 1 special character and 1 number!',
       });
     }
 
@@ -69,14 +70,14 @@ const signup = async (req, res) => {
     user = await userService.getOneUser({ email: email.toLowerCase() });
     if (user) {
       return res.status(422).send({
-        error: "Email associated with another account",
+        error: 'Email associated with another account',
       });
     }
 
     if (firebaseToken) {
       await userService.updateAllUsers(
         {
-          "firebaseTokens.token": firebaseToken,
+          'firebaseTokens.token': firebaseToken,
         },
         {
           $pull: {
@@ -104,23 +105,23 @@ const signup = async (req, res) => {
     const accessToken = jwtService.generateAccessToken(user);
 
     res
-      .header("access_token", accessToken)
+      .header('access_token', accessToken)
       .status(200)
-      .json(user?._doc ? _.omit(user?._doc, ["password"]) : {});
+      .json(user?._doc ? _.omit(user?._doc, ['password']) : {});
   } catch (error) {
-    console.log("Exception signup", error);
+    console.log('Exception signup', error);
     res.status(500).send({
-      error: error?.message ? error?.message : "Something went wrong",
+      error: error?.message ? error?.message : 'Something went wrong',
     });
   }
 };
 
 /**
  * @swagger
- * /auth/login:
+ * /user/login:
  *   post:
  *     summary: signin a user
- *     tags: [Authentication]
+ *     tags: [User]
  *     requestBody:
  *       required: true
  *       content:
@@ -155,23 +156,23 @@ const login = async (req, res) => {
   try {
     const { email, password, firebaseToken } = req.body;
     if (!email || !password) {
-      return res.status(422).send({ error: "Email or password missing!" });
+      return res.status(422).send({ error: 'Email or password missing!' });
     }
 
     const user = await userService.getOneUser({ email: email.toLowerCase() });
     if (!user)
-      return res.status(403).send({ error: "Email or password incorrect!" });
+      return res.status(403).send({ error: 'Email or password incorrect!' });
 
     const isCorrectPass = await bcrypt.compareSync(password, user.password);
     if (!isCorrectPass)
-      return res.status(403).send({ error: "Password incorrect!" });
+      return res.status(403).send({ error: 'Password incorrect!' });
 
     const accessToken = jwtService.generateAccessToken(user);
 
     if (firebaseToken) {
       await userService.updateAllUsers(
         {
-          "firebaseTokens.token": firebaseToken,
+          'firebaseTokens.token': firebaseToken,
         },
         {
           $pull: {
@@ -195,24 +196,24 @@ const login = async (req, res) => {
     }
 
     res
-      .set("access-control-expose-headers", "access_token")
-      .header("access_token", accessToken)
+      .set('access-control-expose-headers', 'access_token')
+      .header('access_token', accessToken)
       .status(200)
-      .json(user?._doc ? _.omit(user?._doc, ["password"]) : {});
+      .json(user?._doc ? _.omit(user?._doc, ['password']) : {});
   } catch (error) {
-    console.log("Exception login", error);
+    console.log('Exception login', error);
     res.status(500).send({
-      error: error?.message ? error?.message : "Something went wrong",
+      error: error?.message ? error?.message : 'Something went wrong',
     });
   }
 };
 
 /**
  * @swagger
- * /auth/forget-password:
+ * /user/forgot_password:
  *   post:
  *     summary: email a reset link when password is forgotton
- *     tags: [Authentication]
+ *     tags: [User]
  *     requestBody:
  *       required: true
  *       content:
@@ -239,29 +240,29 @@ const login = async (req, res) => {
 const forgetPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    if (!email) return res.status(422).send({ error: "Email missing!" });
+    if (!email) return res.status(422).send({ error: 'Email missing!' });
 
     const user = await userService.getOneUser({ email: email.toLowerCase() });
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
     const text = FORGET_PASS_EMAIL_BODY({ _id: user._id }, user.password);
     await sendMail(user.email, FORGET_PASS_EMAIL_SUBJECT, text);
 
-    res.status(200).json({ message: "Email sent successfully!" });
+    res.status(200).json({ message: 'Email sent successfully!' });
   } catch (error) {
-    console.log("Exception forgetPassword", error);
+    console.log('Exception forgetPassword', error);
     res.status(500).send({
-      error: error?.message ? error?.message : "Something went wrong",
+      error: error?.message ? error?.message : 'Something went wrong',
     });
   }
 };
 
 /**
  * @swagger
- * /auth/validate-pass-reset-link:
+ * /user/validate_pass_reset_link:
  *   post:
  *     summary: validates a link sent for resetting password
- *     tags: [Authentication]
+ *     tags: [User]
  *     requestBody:
  *       required: true
  *       content:
@@ -290,34 +291,34 @@ const forgetPassword = async (req, res) => {
 const validateLink = async (req, res) => {
   try {
     const { token } = req.body;
-    if (!token) return res.status(422).send({ error: "Token missing!" });
+    if (!token) return res.status(422).send({ error: 'Token missing!' });
 
     const decoded = jwtService.decodeToken(token);
-    if (!decoded) return res.status(401).json({ error: "Token is not valid!" });
+    if (!decoded) return res.status(401).json({ error: 'Token is not valid!' });
 
     const user = await userService.getOneUser({ _id: decoded.payload._id });
-    if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) return res.status(404).json({ error: 'User not found' });
 
     jwtService.verifyToken(token, user.password, (error, user) => {
       if (error) {
-        return res.status(401).json({ error: "Token is not valid!" });
+        return res.status(401).json({ error: 'Token is not valid!' });
       }
-      return res.status(200).json({ message: "Token valid!" });
+      return res.status(200).json({ message: 'Token valid!' });
     });
   } catch (error) {
-    console.log("Exception validateLink", error);
+    console.log('Exception validateLink', error);
     res.status(500).send({
-      error: error?.message ? error?.message : "Something went wrong",
+      error: error?.message ? error?.message : 'Something went wrong',
     });
   }
 };
 
 /**
  * @swagger
- * /auth/change-password:
+ * /user/update_password:
  *   put:
  *     summary: change an existing user password
- *     tags: [Authentication]
+ *     tags: [User]
  *     requestBody:
  *       required: true
  *       content:
@@ -354,46 +355,46 @@ const changePassword = async (req, res) => {
     const { oldPassword, newPassword, confirmNewPassword } = req.body;
     const userId = req.user._id;
     if (!oldPassword || !newPassword || !confirmNewPassword) {
-      return res.status(422).send({ error: "Required fields missing!" });
+      return res.status(422).send({ error: 'Required fields missing!' });
     }
 
     if (newPassword !== confirmNewPassword) {
       return res
         .status(403)
-        .send({ error: "Password and confirm password are not same." });
+        .send({ error: 'Password and confirm password are not same.' });
     }
 
     if (!newPassword.match(passwordRegex)) {
       return res.status(200).send({
         error:
-          "Password must contain at least 8 characters, 1 uppercase letter, 1 special character and 1 number!",
+          'Password must contain at least 8 characters, 1 uppercase letter, 1 special character and 1 number!',
       });
     }
 
     const user = await userService.getOneUser({ _id: userId });
-    if (!user) return res.status(403).send({ error: "Data not found!" });
+    if (!user) return res.status(403).send({ error: 'Data not found!' });
 
     const isCorrectPass = await bcrypt.compareSync(oldPassword, user.password);
     if (!isCorrectPass) {
-      return res.status(200).send({ error: "Password incorrect!" });
+      return res.status(200).send({ error: 'Password incorrect!' });
     }
 
     await userService.updateUser({ _id: userId }, { password: newPassword });
-    return res.status(200).json({ message: "Password Changed successfully!" });
+    return res.status(200).json({ message: 'Password Changed successfully!' });
   } catch (error) {
-    console.log("Exception change password", error);
+    console.log('Exception change password', error);
     res.status(500).send({
-      error: error?.message ? error?.message : "Something went wrong",
+      error: error?.message ? error?.message : 'Something went wrong',
     });
   }
 };
 
 /**
  * @swagger
- * /auth/change-password:
+ * /user/reset_password:
  *   post:
  *     summary: reset password with email link token
- *     tags: [Authentication]
+ *     tags: [User]
  *     requestBody:
  *       required: true
  *       content:
@@ -425,42 +426,42 @@ const resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body;
     if (!token || !password)
-      return res.status(422).send({ error: "Token or password missing!" });
+      return res.status(422).send({ error: 'Token or password missing!' });
 
     if (!password.match(passwordRegex)) {
       return res.status(200).send({
         error:
-          "Password must contain at least 8 characters, 1 uppercase letter, 1 special character and 1 number!",
+          'Password must contain at least 8 characters, 1 uppercase letter, 1 special character and 1 number!',
       });
     }
 
     const decoded = jwtService.decodeToken(token);
-    if (!decoded) return res.status(401).json({ error: "Token is not valid!" });
+    if (!decoded) return res.status(401).json({ error: 'Token is not valid!' });
 
     const user = await userService.getOneUser({ _id: decoded.payload._id });
     jwtService.verifyToken(token, user.password, async (error, user) => {
       if (error) {
-        return res.status(401).json({ error: "Token is not valid!" });
+        return res.status(401).json({ error: 'Token is not valid!' });
       }
       await userService.updateUser({ _id: decoded.payload._id }, { password });
       return res
         .status(200)
-        .json({ message: "Password Changed successfully!" });
+        .json({ message: 'Password Changed successfully!' });
     });
   } catch (error) {
-    console.log("Exception resetPassword", error);
+    console.log('Exception resetPassword', error);
     res.status(500).send({
-      error: error?.message ? error?.message : "Something went wrong",
+      error: error?.message ? error?.message : 'Something went wrong',
     });
   }
 };
 
 /**
  * @swagger
- * /auth/send-otp:
+ * /user/send_otp:
  *   post:
  *     summary: send an OPT on given number for user verification
- *     tags: [Authentication]
+ *     tags: [User]
  *     requestBody:
  *       required: true
  *       content:
@@ -485,24 +486,24 @@ const resetPassword = async (req, res) => {
 const sendOTP = async (req, res) => {
   try {
     const { number } = req.body;
-    if (!number) return res.status(422).send({ error: "Number missing!" });
+    if (!number) return res.status(422).send({ error: 'Number missing!' });
 
     await smsService.sendOTP(number);
-    res.status(200).json({ message: "OTP sent successfully" });
+    res.status(200).json({ message: 'OTP sent successfully' });
   } catch (error) {
-    console.log("Exception sendOTP", error);
+    console.log('Exception sendOTP', error);
     res.status(500).send({
-      error: error?.message ? error?.message : "Something went wrong",
+      error: error?.message ? error?.message : 'Something went wrong',
     });
   }
 };
 
 /**
  * @swagger
- * /auth/verify-otp:
+ * /user/verify_otp:
  *   post:
  *     summary: verify the sent OTP on given number
- *     tags: [Authentication]
+ *     tags: [User]
  *     requestBody:
  *       required: true
  *       content:
@@ -532,15 +533,52 @@ const verifyOTP = async (req, res) => {
   try {
     const { number, code } = req.body;
     if (!number || !code)
-      return res.status(422).send({ error: "Number or code missing!" });
+      return res.status(422).send({ error: 'Number or code missing!' });
 
     await smsService.verifyOTP(number, code);
     await userService.updateUser({ _id: req.user._id });
-    res.status(200).json({ message: "OTP verified successfully" });
+    res.status(200).json({ message: 'OTP verified successfully' });
   } catch (error) {
-    console.log("Exception verifyOTP", error);
+    console.log('Exception verifyOTP', error);
     res.status(500).send({
-      error: error?.message ? error?.message : "Something went wrong",
+      error: error?.message ? error?.message : 'Something went wrong',
+    });
+  }
+};
+
+/**
+ * @swagger
+ * /user/update:
+ *   put:
+ *     summary: update user's profile
+ *     tags: [User]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: Object
+ *             properties:
+ *               name:
+ *                 type: string
+ *             example:
+ *               name: usama
+ *     responses:
+ *       200:
+ *         description: Profile Updated successfully
+ *       500:
+ *         description: something went wrong
+ */
+const updateProfile = async (req, res) => {
+  try {
+    let { body } = req;
+    body = removeUserLockedFields(body);
+    await userService.updateUser({ _id: req.user._id }, { $set: body });
+    res.status(200).json({ message: 'Profile Updated successfully' });
+  } catch (error) {
+    console.log('Exception verifyOTP', error);
+    res.status(500).send({
+      error: error?.message ? error?.message : 'Something went wrong',
     });
   }
 };
@@ -554,4 +592,5 @@ module.exports = {
   sendOTP,
   verifyOTP,
   changePassword,
+  updateProfile,
 };

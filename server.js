@@ -37,7 +37,7 @@ app.use('/api/docs', swaggerUI.serve, swaggerUI.setup(specs));
 app.use(express.json());
 app.use(cors());
 
-app.get('/api/test', (req, res) => res.send('Backend Working!!'));
+app.get('/api/test', (req, res) => res.send('Backend Working...'));
 app.use('/api/v1', require('./routes/v1'));
 
 db.then(() => {

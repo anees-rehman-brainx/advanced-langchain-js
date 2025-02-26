@@ -1,4 +1,4 @@
 module.exports = {
-  jwtService: require("./jwtService"),
-  userService: require("./userService"),
+  jwtService: require('./jwtService'),
+  userService: require('./userService'),
 };

@@ -26,6 +26,9 @@
   },
   "dependencies": {
     "@braintree/sanitize-url": "^6.0.2",
+    "@langchain/community": "^0.3.32",
+    "@langchain/openai": "^0.4.4",
+    "@pinecone-database/pinecone": "^5.0.2",
     "aws-sdk": "^2.1275.0",
     "bcrypt": "^5.1.0",
     "cors": "^2.8.5",
@@ -33,6 +36,7 @@
     "express": "^4.17.3",
     "firebase-admin": "^11.3.0",
     "jsonwebtoken": "^8.5.1",
+    "langchain": "^0.3.19",
     "lodash": "^4.17.21",
     "mongoose": "^6.2.2",
     "mongoose-to-swagger": "^1.4.0",

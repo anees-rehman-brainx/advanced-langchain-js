@@ -7,7 +7,6 @@ const {
 } = require('../constants');
 const bcrypt = require('bcrypt');
 const { sendMail } = require('../services/mailerService');
-const smsService = require('../services/smsService');
 const _ = require('lodash');
 const { removeUserLockedFields } = require('../services/utilsService');
 
